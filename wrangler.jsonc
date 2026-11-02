@@ -12,7 +12,9 @@
 	},
 	"upload_source_maps": true,
 	"routes": [{ "pattern": "sample-cf-workers-d1.alphajinsei.com", "custom_domain": true, }],
-	"workers_dev": false
+	"workers_dev": false,
+	"assets": { "directory": "./public" }
+
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
