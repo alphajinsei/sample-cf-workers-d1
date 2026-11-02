@@ -21,36 +21,32 @@ export default {
 
 
 import { Hono } from "hono";
+import { asc, eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
+import { memos } from "./db/schema";
 
 const app = new Hono<{ Bindings: Env }>();
 
 app.get("/api/health", (c) => c.json({ ok: true }));
 
-type Memo = { id: number; text: string; createdAt: string };
-
 app.get("/api/memos", async (c) => {
-  const { results } = await c.env.DB
-    .prepare("SELECT id, text, created_at AS createdAt FROM memos ORDER BY id")
-    .all<Memo>();
-  return c.json(results);
+  const db = drizzle(c.env.DB);
+  const rows = await db.select().from(memos).orderBy(asc(memos.id));
+  return c.json(rows);
 });
 
 app.post("/api/memos", async (c) => {
   const { text } = await c.req.json<{ text: string }>();
-  const memo = await c.env.DB
-    .prepare("INSERT INTO memos (text) VALUES (?) RETURNING id, text, created_at AS createdAt")
-    .bind(text)
-    .first<Memo>();
+  const db = drizzle(c.env.DB);
+  const [memo] = await db.insert(memos).values({ text }).returning();
   return c.json(memo, 201);
 });
 
 app.delete("/api/memos/:id", async (c) => {
   const id = Number(c.req.param("id"));
-  const { meta } = await c.env.DB
-    .prepare("DELETE FROM memos WHERE id = ?")
-    .bind(id)
-    .run();
-  if (meta.changes === 0) return c.json({ error: "not found" }, 404);
+  const db = drizzle(c.env.DB);
+  const deleted = await db.delete(memos).where(eq(memos.id, id)).returning();
+  if (deleted.length === 0) return c.json({ error: "not found" }, 404);
   return c.body(null, 204);
 });
 
