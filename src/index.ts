@@ -28,23 +28,29 @@ app.get("/api/health", (c) => c.json({ ok: true }));
 
 type Memo = { id: number; text: string; createdAt: string };
 
-const memos: Memo[] = [];
-let nextId = 1;
-
-app.get("/api/memos", (c) => c.json(memos));
+app.get("/api/memos", async (c) => {
+  const { results } = await c.env.DB
+    .prepare("SELECT id, text, created_at AS createdAt FROM memos ORDER BY id")
+    .all<Memo>();
+  return c.json(results);
+});
 
 app.post("/api/memos", async (c) => {
   const { text } = await c.req.json<{ text: string }>();
-  const memo: Memo = { id: nextId++, text, createdAt: new Date().toISOString() };
-  memos.push(memo);
+  const memo = await c.env.DB
+    .prepare("INSERT INTO memos (text) VALUES (?) RETURNING id, text, created_at AS createdAt")
+    .bind(text)
+    .first<Memo>();
   return c.json(memo, 201);
 });
 
-app.delete("/api/memos/:id", (c) => {
+app.delete("/api/memos/:id", async (c) => {
   const id = Number(c.req.param("id"));
-  const index = memos.findIndex((m) => m.id === id);
-  if (index === -1) return c.json({ error: "not found" }, 404);
-  memos.splice(index, 1);
+  const { meta } = await c.env.DB
+    .prepare("DELETE FROM memos WHERE id = ?")
+    .bind(id)
+    .run();
+  if (meta.changes === 0) return c.json({ error: "not found" }, 404);
   return c.body(null, 204);
 });
 
