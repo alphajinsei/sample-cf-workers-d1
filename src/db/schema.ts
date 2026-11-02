@@ -6,4 +6,5 @@ export const memos = sqliteTable("memos", {
   text: text("text").notNull(),
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
   updatedAt: text("updated_at"),
+  tag: text("tag"),
 });
