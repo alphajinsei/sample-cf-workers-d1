@@ -1,15 +1,15 @@
 # sample-cf-workers-d1
 
-枠②（標準・アプリ + DB）のサンプル。Cloudflare Workers + Hono + D1 + Drizzle で作ったメモ帳の API と、Terraform で管理する Access（`/admin` にログインを付ける）。
+方式②（標準・アプリ + DB）のサンプル。Cloudflare Workers + Hono + D1 + Drizzle で作ったメモ帳の API と、Terraform で管理する Access（`/admin` にログインを付ける）。
 
 - 公開先：https://sample-cf-workers-d1.alphajinsei.com
-- 全体の方針と、どの枠でも共通の決まりごと：[サービス開発ガイド](https://github.com/alphajinsei/cf-infra-playbook/blob/main/docs/service-guide.md)（手元では `~/claude-sandbox/infra/docs/service-guide.md`）
+- 全体の方針と、どの方式でも共通の決まりごと：[サービス開発ガイド](https://github.com/alphajinsei/cf-infra-playbook/blob/main/docs/service-guide.md)（手元では `~/claude-sandbox/infra/docs/service-guide.md`）
 
-## 1. この枠の用途
+## 1. この方式の用途
 
 向いているもの：データを保存・検索するアプリ全般（フォーム、メモ、小さな管理画面、JSON の API、HTTP で呼ばれる Bot の Webhook）。既定の選択肢。
 
-向いていないもの：常駐プロセス、WebSocket の常時接続、重い計算（1リクエストの CPU 時間に上限がある）、Node.js 専用のライブラリが必須なもの、PostgreSQL が必須なもの。これらは枠④（汎用VM）。
+向いていないもの：常駐プロセス、WebSocket の常時接続、重い計算（1リクエストの CPU 時間に上限がある）、Node.js 専用のライブラリが必須なもの、PostgreSQL が必須なもの。これらは方式④（汎用VM）。
 
 ## 2. 構成と主なファイル
 
@@ -34,7 +34,6 @@
 | `public/` | そのまま返す静的ファイル（画面） |
 | `worker-configuration.d.ts` | `npx wrangler types` が作る型（`Env` に `DB` が入る）。`wrangler.jsonc` を変えたら作り直す |
 | `infra/terraform/` | Access（wrangler で扱えないもの）。`tf.sh` が `~/claude-sandbox/infra/.secrets/` の鍵を読んで terraform を実行する。state は R2 の `tfstate` バケット |
-| `test/` | create-cloudflare のひな形のまま（Hello World を期待しているので、今は通らない） |
 
 ## 3. 手元での開発
 
@@ -104,7 +103,6 @@ npx wrangler d1 create <name>-db --location apac    # 出力された database_i
 | `migrations/` | フォルダごと消してから `npx drizzle-kit generate` で作り直す（メモのテーブルの履歴を持ち込まない） |
 | `src/index.ts` | メモの API を置き換える。`/api/health` は残してよい |
 | `public/index.html` | 画面 |
-| `test/` | 使わないなら消す |
 | `infra/terraform/main.tf` | `locals` の `hostname`、リソースの `name`（`sample-cf-workers-d1: ...`）。Access が要らなければ `infra/` ごと消す |
 | `infra/terraform/versions.tf` | backend の `key`（`<name>/terraform.tfstate`）。ここを変え忘れると、サンプルの state を上書きする |
 | `README.md` | このファイルを新しいサービスの説明に書き直す（見出しはそのまま） |
@@ -123,7 +121,7 @@ cd infra/terraform && ./tf.sh init && ./tf.sh apply   # Access を使うとき�
 - infra で Claude Code を開いて作業するなら、`~/claude-sandbox/infra/.claude/settings.json` の `additionalDirectories` に `~/claude-sandbox/<name>` を足す。
 - コミットの作者のメールアドレスを隠すなら、最初のコミットの前に `git config user.email <ID>+alphajinsei@users.noreply.github.com`。
 
-## 6. この枠の注意点
+## 6. この方式の注意点
 
 - **状態は D1 に置く。**グローバル変数やメモリ上の配列は、リクエストごとに別の isolate に当たると見えない。
 - **スキーマは `schema.ts` からだけ変える。**本番に直接 DDL を流すと、Drizzle のスナップショットと実物がずれる（drizzle-kit は実物を見ないので気づけない）。
