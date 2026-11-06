@@ -4,6 +4,7 @@
 
 - 公開先：https://sample-cf-workers-d1.alphajinsei.com
 - 全体の方針と、どの方式でも共通の決まりごと：[サービス開発ガイド](https://github.com/alphajinsei/cf-infra-playbook/blob/main/docs/service-guide.md)（手元では `~/claude-sandbox/infra/docs/service-guide.md`）
+- Cloudflare の上で作るときに知っておくこと（Worker と D1 の性質、運用、困ったとき）：[基盤ガイド：Cloudflare](https://github.com/alphajinsei/cf-infra-playbook/blob/main/docs/platforms/cloudflare.md)
 
 ## 1. この方式の用途
 
